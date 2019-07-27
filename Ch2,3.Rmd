@@ -1,0 +1,533 @@
+---
+title: "Data report"
+author: "University of Cincinnati"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+runtime: shiny
+---
+
+## **Chapter #2 : Financial Accounts
+
+**Highlights:**
+  On an exchange rate basis, USD is still a stronger currency
+
+
+## 2.1 Exchange rates
+The United States 
+``````{r fig.width=8, fig.height=4, fig.align='center',echo=FALSE,warning=FALSE,fig.cap = "Figure 1.4.1",message=FALSE}
+
+library(ggplot2)
+library(dplyr)
+library(reshape)
+library(tidyr)
+library(shiny)
+library(plotly)
+library(shinythemes)
+exch_url<- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTSFkKmvFq80FC71Qgqys1z8WVyxbxjSQsDWObi86bqcSWheyjU53A0qFfJRxG62HCWO0k1Cv55ed87/pub?gid=1551078505&single=true&output=csv"
+exch_csv<- read.csv(url(exch_url))
+df_exch<- melt(exch_csv, id = "Time")
+df_exch$Time <- as.Date(df_exch$Time, format = "%m/%d/%Y")
+colnames(df_exch)[1]<- "Year"
+colnames(df_exch)[2]<- "Country"
+ui <- fluidPage(theme = shinytheme("superhero"),
+                tabsetPanel(
+                  tabPanel( title = "Plot",
+                            # Sidebar layout with a input and output definitions
+                            sidebarLayout(
+                              # Inputs
+                              sidebarPanel(numericInput("size", "Point size", 1, 1),
+                                           checkboxInput("fit", "Add line of best fit", FALSE),
+                                           selectInput("Country", "Country",choices = c("All", levels(df_exch$Country)))
+                              ),
+                              # Outputs
+                              mainPanel(
+                                plotlyOutput(outputId = "scatterplot")
+                              )
+                            )
+                  ),
+                  
+                  tabPanel(title = "Table",tableOutput("table"))
+                )
+)
+
+# Define server function required to create the scatterplot
+server <- function(input, output) {
+  output$scatterplot <- renderPlotly({
+    ggplotly({
+      mydata1 = df_exch
+      if (input$Country != "All") {
+        mydata1 <- subset( mydata1,Country == input$Country
+        )
+      }
+      
+      p<- ggplot(data=mydata1, aes_string(x=mydata1$Year, y = mydata1$value,color = mydata1$Country)) +
+        geom_line(size = input$size) + xlab("Year") + ylab("Value")+ggtitle("Exchange rates")
+      if (input$fit) {
+        p <- p + geom_smooth(method = "lm")
+      }
+      p
+      
+    })
+  })
+  output$table <- renderTable({
+    mydata1 <- df_exch
+    data <- spread(mydata1,Country,value)
+    data$Year <- as.Date(data$Year, format = "%m/%d/%Y")
+    data
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+
+## 2.2 Discount rates
+The below graph compares discount rates of major economies decided by corresponding central banks
+``````{r fig.width=8, fig.height=4, fig.align='center',echo=FALSE,warning=FALSE,fig.cap = "Figure 1.4.1",message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(reshape)
+library(tidyr)
+library(shiny)
+library(plotly)
+library(shinythemes)
+disc_url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTSFkKmvFq80FC71Qgqys1z8WVyxbxjSQsDWObi86bqcSWheyjU53A0qFfJRxG62HCWO0k1Cv55ed87/pub?gid=2051096122&single=true&output=csv"
+disc_csv<- read.csv(url(disc_url))
+df_disc<- melt(disc_csv, id = "Year")
+colnames(df_disc)[2]<- "Country"
+ui <- fluidPage(theme = shinytheme("superhero"),
+                tabsetPanel(
+                  tabPanel( title = "Plot",
+                            # Sidebar layout with a input and output definitions
+                            sidebarLayout(
+                              # Inputs
+                              sidebarPanel(numericInput("size", "Point size", 1, 1),
+                                           checkboxInput("fit", "Add line of best fit", FALSE),
+                                           selectInput("Country", "Country",choices = c("All", levels(df_disc$Country)))
+                              ),
+                              # Outputs
+                              mainPanel(
+                                plotlyOutput(outputId = "scatterplot")
+                              )
+                            )
+                  ),
+                  
+                  tabPanel(title = "Table",tableOutput("table"))
+                )
+)
+
+# Define server function required to create the scatterplot
+server <- function(input, output) {
+  output$scatterplot <- renderPlotly({
+    ggplotly({
+      mydata1 = df_disc
+      if (input$Country != "All") {
+        mydata1 <- subset( mydata1,Country == input$Country
+        )
+      }
+      
+      p<- ggplot(data=mydata1, aes_string(x=mydata1$Year, y = mydata1$value,color = mydata1$Country)) +
+        geom_line(size = input$size) + xlab("Year") + ylab("Value")+ggtitle("Discount rates")
+      if (input$fit) {
+        p <- p + geom_smooth(method = "lm")
+      }
+      p
+      
+    })
+  })
+  output$table <- renderTable({
+    mydata1 <- df_disc
+    data <- spread(mydata1,Country,value)
+    data
+  })
+}
+
+shinyApp(ui = ui, server = server)
+
+```
+## 2.3 Inflation - consumer price index
+The below graph compares change in consumer price indeces of major economies. The data is converted to annual basis based on average of all months in the year.
+
+``````{r fig.width=8, fig.height=4, fig.align='center',echo=FALSE,warning=FALSE,fig.cap = "Figure 1.4.1",message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(reshape)
+library(tidyr)
+library(shiny)
+library(plotly)
+library(shinythemes)
+
+infl_url<- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTSFkKmvFq80FC71Qgqys1z8WVyxbxjSQsDWObi86bqcSWheyjU53A0qFfJRxG62HCWO0k1Cv55ed87/pub?gid=1228243987&single=true&output=csv"
+infl_csv <- read.csv(url(infl_url))
+df_infl<- melt(infl_csv, id = "Year")
+colnames(df_infl)[2]<- "Country"
+ui <- fluidPage(theme = shinytheme("superhero"),
+                tabsetPanel(
+                  tabPanel( title = "Plot",
+                            # Sidebar layout with a input and output definitions
+                            sidebarLayout(
+                              # Inputs
+                              sidebarPanel(numericInput("size", "Point size", 1, 1),
+                                           checkboxInput("fit", "Add line of best fit", FALSE),
+                                           selectInput("Country", "Country",choices = c("All", levels(df_infl$Country)))
+                              ),
+                              # Outputs
+                              mainPanel(
+                                plotlyOutput(outputId = "scatterplot")
+                              )
+                            )
+                  ),
+                  
+                  tabPanel(title = "Table",tableOutput("table"))
+                )
+)
+
+# Define server function required to create the scatterplot
+server <- function(input, output) {
+  output$scatterplot <- renderPlotly({
+    ggplotly({
+      mydata1 = df_infl
+      if (input$Country != "All") {
+        mydata1 <- subset( mydata1,Country == input$Country
+        )
+      }
+      
+      p<- ggplot(data=mydata1, aes_string(x=mydata1$Year, y = mydata1$value,color = mydata1$Country)) +
+        geom_line(size = input$size) + xlab("Year") + ylab("Value")+ggtitle("Inflation rate")
+      if (input$fit) {
+        p <- p + geom_smooth(method = "lm")
+      }
+      p
+      
+    })
+  })
+  output$table <- renderTable({
+    mydata1 <- df_infl
+    data <- spread(mydata1,Country,value)
+    data
+  })
+}
+
+shinyApp(ui = ui, server = server)
+
+```
+
+## **Chapter #3 : Government Policy decisions 
+
+
+## 3.1 Budget comparison- Surplus or Deficit - major economies 
+The below graph ooks into the trend of Budget of USA and other major economies. Positive numbers resemble budget surplus and negative numbers resemble budget deficit.
+``````{r fig.width=8, fig.height=4, fig.align='center',echo=FALSE,warning=FALSE,fig.cap = "Figure 1.4.1",message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(reshape)
+library(tidyr)
+library(shiny)
+library(plotly)
+library(shinythemes)
+budg_country_url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTSFkKmvFq80FC71Qgqys1z8WVyxbxjSQsDWObi86bqcSWheyjU53A0qFfJRxG62HCWO0k1Cv55ed87/pub?gid=2079367339&single=true&output=csv"
+df_budg <- read.csv(url(budg_country_url))
+
+ui <- fluidPage(theme = shinytheme("superhero"),
+                tabsetPanel(
+                  tabPanel( title = "Plot",
+                            # Sidebar layout with a input and output definitions
+                            sidebarLayout(
+                              # Inputs
+                              sidebarPanel(numericInput("size", "Point size", 1, 1),
+                                           checkboxInput("fit", "Add line of best fit", FALSE),
+                                           selectInput("Country", "Country",choices = c("All", levels(df_budg$Country)))
+                              ),
+                              # Outputs
+                              mainPanel(
+                                plotlyOutput(outputId = "scatterplot")
+                              )
+                            )
+                  ),
+                  
+                  tabPanel(title = "Table",tableOutput("table"))
+                )
+)
+
+# Define server function required to create the scatterplot
+server <- function(input, output) {
+  output$scatterplot <- renderPlotly({
+    ggplotly({
+      mydata1 = df_budg
+      if (input$Country != "All") {
+        mydata1 <- subset( mydata1,Country == input$Country
+        )
+      }
+      
+      p<- ggplot(data=mydata1, aes_string(x=mydata1$Year, y = mydata1$Value,color = mydata1$Country)) +
+        geom_line(size = input$size) + xlab("Year") + ylab("Value")+ggtitle("Budget (Surplus/Deficit)")
+      if (input$fit) {
+        p <- p + geom_smooth(method = "lm")
+      }
+      p
+      
+    })
+  })
+  output$table <- renderTable({
+    mydata1 <- df_budg
+    data <- spread(mydata1,Country,Value)
+    data
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+## 3.2 Debt to GDP ratio - major economies
+
+``````{r fig.width=8, fig.height=4, fig.align='center',echo=FALSE,warning=FALSE,fig.cap = "Figure 1.4.1",message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(reshape)
+library(tidyr)
+library(shiny)
+library(plotly)
+library(shinythemes)
+debt_url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTSFkKmvFq80FC71Qgqys1z8WVyxbxjSQsDWObi86bqcSWheyjU53A0qFfJRxG62HCWO0k1Cv55ed87/pub?gid=353876118&single=true&output=csv"
+debt_csv <- read.csv(url(debt_url))
+df_debt<- melt(debt_csv, id = "Year")
+colnames(df_debt)[2]<- "Country"
+ui <- fluidPage(theme = shinytheme("superhero"),
+                tabsetPanel(
+                  tabPanel( title = "Plot",
+                            # Sidebar layout with a input and output definitions
+                            sidebarLayout(
+                              # Inputs
+                              sidebarPanel(numericInput("size", "Point size", 1, 1),
+                                           checkboxInput("fit", "Add line of best fit", FALSE),
+                                           selectInput("Country", "Country",choices = c("All", levels(df_debt$Country)))
+                              ),
+                              # Outputs
+                              mainPanel(
+                                plotlyOutput(outputId = "scatterplot")
+                              )
+                            )
+                  ),
+                  
+                  tabPanel(title = "Table",tableOutput("table"))
+                )
+)
+
+# Define server function required to create the scatterplot
+server <- function(input, output) {
+  output$scatterplot <- renderPlotly({
+    ggplotly({
+      mydata1 = df_debt
+      if (input$Country != "All") {
+        mydata1 <- subset( mydata1,Country == input$Country
+        )
+      }
+      
+      p<- ggplot(data=mydata1, aes_string(x=mydata1$Year, y = mydata1$value,color = mydata1$Country)) +
+        geom_line(size = input$size) + xlab("Year") + ylab("Value")+ggtitle("Debt to GDP ratio")
+      if (input$fit) {
+        p <- p + geom_smooth(method = "lm")
+      }
+      p
+      
+    })
+  })
+  output$table <- renderTable({
+    mydata1 <- df_debt
+    data <- spread(mydata1,Country,value)
+    data
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+## 3.3 Effective tariff rate - manufacturing only
+The below graph shows the effective tax rate of manufacturing products as a whole. This compares the major economies wrt to USD. 
+``````{r fig.width=8, fig.height=4, fig.align='center',echo=FALSE,warning=FALSE,fig.cap = "Figure 1.4.1",message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(reshape)
+library(tidyr)
+library(shiny)
+library(plotly)
+library(shinythemes)
+tariff_mfg_url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTSFkKmvFq80FC71Qgqys1z8WVyxbxjSQsDWObi86bqcSWheyjU53A0qFfJRxG62HCWO0k1Cv55ed87/pub?gid=1909503509&single=true&output=csv"
+tariff_mfg_csv <- read.csv(url(tariff_mfg_url))
+df_tariff<- melt(tariff_mfg_csv, id = "Year")
+colnames(df_tariff)[2]<- "Country"
+ui <- fluidPage(theme = shinytheme("superhero"),
+                tabsetPanel(
+                  tabPanel( title = "Plot",
+                            # Sidebar layout with a input and output definitions
+                            sidebarLayout(
+                              # Inputs
+                              sidebarPanel(numericInput("size", "Point size", 1, 1),
+                                           checkboxInput("fit", "Add line of best fit", FALSE),
+                                           selectInput("Country", "Country",choices = c("All", levels(df_tariff$Country)))
+                              ),
+                              # Outputs
+                              mainPanel(
+                                plotlyOutput(outputId = "scatterplot")
+                              )
+                            )
+                  ),
+                  
+                  tabPanel(title = "Table",tableOutput("table"))
+                )
+)
+
+# Define server function required to create the scatterplot
+server <- function(input, output) {
+  output$scatterplot <- renderPlotly({
+    ggplotly({
+      mydata1 = df_tariff
+      if (input$Country != "All") {
+        mydata1 <- subset( mydata1,Country == input$Country
+        )
+      }
+      
+      p<- ggplot(data=mydata1, aes_string(x=mydata1$Year, y = mydata1$value,color = mydata1$Country)) +
+        geom_line(size = input$size) + xlab("Year") + ylab("Value")+ggtitle("Effective tariff rate-Manufacturing")
+      if (input$fit) {
+        p <- p + geom_smooth(method = "lm")
+      }
+      p
+      
+    })
+  })
+  output$table <- renderTable({
+    mydata1 <- df_tariff
+    data <- spread(mydata1,Country,value)
+    data
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+## 3.4 USA budget - surplus/budget total amount
+
+This graph shows total budget of USA - quantity wise
+
+``````{r fig.width=8, fig.height=4, fig.align='center',echo=FALSE,warning=FALSE,fig.cap = "Figure 1.4.1",message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(reshape)
+library(tidyr)
+library(shiny)
+library(plotly)
+library(shinythemes)
+budget_url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTSFkKmvFq80FC71Qgqys1z8WVyxbxjSQsDWObi86bqcSWheyjU53A0qFfJRxG62HCWO0k1Cv55ed87/pub?gid=956405346&single=true&output=csv"
+budget_csv <- read.csv(url(budget_url))
+df_budget_usa<- melt(budget_csv, id = "Year")
+ui <- fluidPage(theme = shinytheme("superhero"),
+                tabsetPanel(
+                  tabPanel( title = "Plot",
+                            # Sidebar layout with a input and output definitions
+                            sidebarLayout(
+                              # Inputs
+                              sidebarPanel(numericInput("size", "Point size", 1, 1),
+                                           checkboxInput("fit", "Add line of best fit", FALSE)
+                              ),
+                              # Outputs
+                              mainPanel(
+                                plotlyOutput(outputId = "scatterplot")
+                              )
+                            )
+                  ),
+                  
+                  tabPanel(title = "Table",tableOutput("table"))
+                )
+)
+
+# Define server function required to create the scatterplot
+server <- function(input, output) {
+  output$scatterplot <- renderPlotly({
+    ggplotly({
+      mydata1 = df_budget_usa
+      p<- ggplot(data=mydata1, aes_string(x=mydata1$Year, y = mydata1$value)) +
+        geom_line(size = input$size) + xlab("Year") + ylab("Value")+ggtitle("BUdget in total of USA")
+      if (input$fit) {
+        p <- p + geom_smooth(method = "lm")
+      }
+      p
+      
+    })
+  })
+  output$table <- renderTable({
+    mydata1 <- df_budget_usa
+    mydata1
+  })
+}
+shinyApp(ui = ui, server = server)
+```
+
+## 3.5 MIllitary percent spend as a percent of GDP - major economies comparison
+
+the below graph shows the comparison of millitary spend as a percent of GDP within all the major economies.
+
+``````{r fig.width=8, fig.height=4, fig.align='center',echo=FALSE,warning=FALSE,fig.cap = "Figure 1.4.1",message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(reshape)
+library(tidyr)
+library(shiny)
+library(plotly)
+library(shinythemes)
+millitary_url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTSFkKmvFq80FC71Qgqys1z8WVyxbxjSQsDWObi86bqcSWheyjU53A0qFfJRxG62HCWO0k1Cv55ed87/pub?gid=353876118&single=true&output=csv"
+millitary_csv <- read.csv(url(millitary_url))
+df_millitary<- melt(millitary_csv, id = "Year")
+colnames(df_millitary)[2]<- "Country"
+ui <- fluidPage(theme = shinytheme("superhero"),
+                tabsetPanel(
+                  tabPanel( title = "Plot",
+                            # Sidebar layout with a input and output definitions
+                            sidebarLayout(
+                              # Inputs
+                              sidebarPanel(numericInput("size", "Point size", 1, 1),
+                                           checkboxInput("fit", "Add line of best fit", FALSE),
+                                           selectInput("Country", "Country",choices = c("All", levels(df_millitary$Country)))
+                              ),
+                              # Outputs
+                              mainPanel(
+                                plotlyOutput(outputId = "scatterplot")
+                              )
+                            )
+                  ),
+                  
+                  tabPanel(title = "Table",tableOutput("table"))
+                )
+)
+
+# Define server function required to create the scatterplot
+server <- function(input, output) {
+  output$scatterplot <- renderPlotly({
+    ggplotly({
+      mydata1 = df_millitary
+      if (input$Country != "All") {
+        mydata1 <- subset( mydata1,Country == input$Country
+        )
+      }
+      
+      p<- ggplot(data=mydata1, aes_string(x=mydata1$Year, y = mydata1$value,color = mydata1$Country)) +
+        geom_line(size = input$size) + xlab("Year") + ylab("Value")+ggtitle("Millitary spending as a percent GDP ratio")
+      if (input$fit) {
+        p <- p + geom_smooth(method = "lm")
+      }
+      p
+      
+    })
+  })
+  output$table <- renderTable({
+    mydata1 <- df_millitary
+    data <- spread(mydata1,Country,value)
+    data
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
