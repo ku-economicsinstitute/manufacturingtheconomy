@@ -1,0 +1,285 @@
+---
+title: "Data report"
+author: "University of Cincinnati"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+runtime: shiny
+---
+
+## **Chapter #6 : Social Indicators
+
+**Highlights:**
+Below are the social indicators comparison between countries
+
+## 6.1 Expected years of schooling
+``````{r fig.width=8, fig.height=4, fig.align='center',echo=FALSE,warning=FALSE,fig.cap = "Figure 1.4.1",message=FALSE}
+
+library(ggplot2)
+library(dplyr)
+library(reshape)
+library(tidyr)
+library(shiny)
+library(plotly)
+library(shinythemes)
+schl_url<- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTSFkKmvFq80FC71Qgqys1z8WVyxbxjSQsDWObi86bqcSWheyjU53A0qFfJRxG62HCWO0k1Cv55ed87/pub?gid=1191288074&single=true&output=csv"
+schl_csv<- read.csv(url(schl_url))
+schl_csv$unit
+df_schl<- melt(schl_csv, id = "Year")
+#df_exch$Year <- as.Date(df_exch$Year, format = "%m/%d/%Y")
+colnames(df_schl)[1]<- "Year"
+colnames(df_schl)[2]<- "Country"
+ui <- fluidPage(theme = shinytheme("superhero"),
+                tabsetPanel(
+                  tabPanel( title = "Plot",
+                            # Sidebar layout with a input and output definitions
+                            sidebarLayout(
+                              # Inputs
+                              sidebarPanel(numericInput("size", "Point size", 1, 1),
+                                           checkboxInput("fit", "Add line of best fit", FALSE),
+                                           selectInput("Country", "Country",choices = c("All", levels(df_schl$Country)))
+                              ),
+                              # Outputs
+                              mainPanel(
+                                plotlyOutput(outputId = "scatterplot")
+                              )
+                            )
+                  ),
+                  
+                  tabPanel(title = "Table",tableOutput("table"))
+                )
+)
+
+# Define server function required to create the scatterplot
+server <- function(input, output) {
+  output$scatterplot <- renderPlotly({
+    ggplotly({
+      mydata1 = df_schl
+      if (input$Country != "All") {
+        mydata1 <- subset( mydata1,Country == input$Country
+        )
+      }
+      
+      p<- ggplot(data=mydata1, aes_string(x=mydata1$Year, y = mydata1$value,color = mydata1$Country)) +
+        geom_line(size = input$size) + xlab("Year") + ylab("Value")+ggtitle("Years of Schooling ")
+      if (input$fit) {
+        p <- p + geom_smooth(method = "lm")
+      }
+      p
+      
+    })
+  })
+  output$table <- renderTable({
+    mydata1 <- df_schl
+    data <- spread(mydata1,Country,value)
+    data
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
+## 6.2 Public Health expenditure as % of GDP
+
+``````{r fig.width=8, fig.height=4, fig.align='center',echo=FALSE,warning=FALSE,fig.cap = "Figure 1.4.1",message=FALSE}
+
+library(ggplot2)
+library(dplyr)
+library(reshape)
+library(tidyr)
+library(shiny)
+library(plotly)
+library(shinythemes)
+phealth_url<- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTSFkKmvFq80FC71Qgqys1z8WVyxbxjSQsDWObi86bqcSWheyjU53A0qFfJRxG62HCWO0k1Cv55ed87/pub?gid=259706572&single=true&output=csv"
+phealth_csv<- read.csv(url(phealth_url))
+colnames(phealth_csv)[8] <- "UK"
+df_phealth<- melt(phealth_csv, id = "Year")
+#df_exch$Year <- as.Date(df_exch$Year, format = "%m/%d/%Y")
+colnames(df_phealth)[1]<- "Year"
+colnames(df_phealth)[2]<- "Country"
+ui <- fluidPage(theme = shinytheme("superhero"),
+                tabsetPanel(
+                  tabPanel( title = "Plot",
+                            # Sidebar layout with a input and output definitions
+                            sidebarLayout(
+                              # Inputs
+                              sidebarPanel(numericInput("size", "Point size", 1, 1),
+                                           checkboxInput("fit", "Add line of best fit", FALSE),
+                                           selectInput("Country", "Country",choices = c("All", levels(df_phealth$Country)))
+                              ),
+                              # Outputs
+                              mainPanel(
+                                plotlyOutput(outputId = "scatterplot")
+                              )
+                            )
+                  ),
+                  
+                  tabPanel(title = "Table",tableOutput("table"))
+                )
+)
+
+# Define server function required to create the scatterplot
+server <- function(input, output) {
+  output$scatterplot <- renderPlotly({
+    ggplotly({
+      mydata1 = df_phealth
+      if (input$Country != "All") {
+        mydata1 <- subset( mydata1,Country == input$Country
+        )
+      }
+      
+      p<- ggplot(data=mydata1, aes_string(x=mydata1$Year, y = mydata1$value,color = mydata1$Country)) +
+        geom_line(size = input$size) + xlab("Year") + ylab("Value")+ggtitle("Public Health %of GDP")
+      if (input$fit) {
+        p <- p + geom_smooth(method = "lm")
+      }
+      p
+      
+    })
+  })
+  output$table <- renderTable({
+    mydata1 <- df_phealth
+    data <- spread(mydata1,Country,value)
+    data
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+## 6.3 Total Health expenditure as % of GDP
+
+``````{r fig.width=8, fig.height=4, fig.align='center',echo=FALSE,warning=FALSE,fig.cap = "Figure 1.4.1",message=FALSE}
+
+library(ggplot2)
+library(dplyr)
+library(reshape)
+library(tidyr)
+library(shiny)
+library(plotly)
+library(shinythemes)
+health_url<- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTSFkKmvFq80FC71Qgqys1z8WVyxbxjSQsDWObi86bqcSWheyjU53A0qFfJRxG62HCWO0k1Cv55ed87/pub?gid=773941787&single=true&output=csv"
+health_csv<- read.csv(url(health_url))
+df_health<- melt(health_csv, id = "Year")
+#df_exch$Year <- as.Date(df_exch$Year, format = "%m/%d/%Y")
+colnames(df_health)[1]<- "Year"
+colnames(df_health)[2]<- "Country"
+ui <- fluidPage(theme = shinytheme("superhero"),
+                tabsetPanel(
+                  tabPanel( title = "Plot",
+                            # Sidebar layout with a input and output definitions
+                            sidebarLayout(
+                              # Inputs
+                              sidebarPanel(numericInput("size", "Point size", 1, 1),
+                                           checkboxInput("fit", "Add line of best fit", FALSE),
+                                           selectInput("Country", "Country",choices = c("All", levels(df_health$Country)))
+                              ),
+                              # Outputs
+                              mainPanel(
+                                plotlyOutput(outputId = "scatterplot")
+                              )
+                            )
+                  ),
+                  
+                  tabPanel(title = "Table",tableOutput("table"))
+                )
+)
+
+# Define server function required to create the scatterplot
+server <- function(input, output) {
+  output$scatterplot <- renderPlotly({
+    ggplotly({
+      mydata1 = df_health
+      if (input$Country != "All") {
+        mydata1 <- subset( mydata1,Country == input$Country
+        )
+      }
+      
+      p<- ggplot(data=mydata1, aes_string(x=mydata1$Year, y = mydata1$value,color = mydata1$Country)) +
+        geom_line(size = input$size) + xlab("Year") + ylab("Value")+ggtitle(" Health Expenditure %of GDP")
+      if (input$fit) {
+        p <- p + geom_smooth(method = "lm")
+      }
+      p
+      
+    })
+  })
+  output$table <- renderTable({
+    mydata1 <- df_health
+    data <- spread(mydata1,Country,value)
+    data
+  })
+}
+
+shinyApp(ui = ui, server = server)
+
+```
+
+## 6.4 Life Expectancy
+
+``````{r fig.width=8, fig.height=4, fig.align='center',echo=FALSE,warning=FALSE,fig.cap = "Figure 1.4.1",message=FALSE}
+
+library(ggplot2)
+library(dplyr)
+library(reshape)
+library(tidyr)
+library(shiny)
+library(plotly)
+library(shinythemes)
+lifeexp_url<- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTSFkKmvFq80FC71Qgqys1z8WVyxbxjSQsDWObi86bqcSWheyjU53A0qFfJRxG62HCWO0k1Cv55ed87/pub?gid=2066172340&single=true&output=csv"
+lifeexp_csv<- read.csv(url(lifeexp_url))
+df_lifeexp<- melt(lifeexp_csv, id = "Year")
+#df_exch$Year <- as.Date(df_exch$Year, format = "%m/%d/%Y")
+colnames(df_lifeexp)[1]<- "Year"
+colnames(df_lifeexp)[2]<- "Country"
+ui <- fluidPage(theme = shinytheme("superhero"),
+                tabsetPanel(
+                  tabPanel( title = "Plot",
+                            # Sidebar layout with a input and output definitions
+                            sidebarLayout(
+                              # Inputs
+                              sidebarPanel(numericInput("size", "Point size", 1, 1),
+                                           checkboxInput("fit", "Add line of best fit", FALSE),
+                                           selectInput("Country", "Country",choices = c("All", levels(df_lifeexp$Country)))
+                              ),
+                              # Outputs
+                              mainPanel(
+                                plotlyOutput(outputId = "scatterplot")
+                              )
+                            )
+                  ),
+                  
+                  tabPanel(title = "Table",tableOutput("table"))
+                )
+)
+
+# Define server function required to create the scatterplot
+server <- function(input, output) {
+  output$scatterplot <- renderPlotly({
+    ggplotly({
+      mydata1 = df_lifeexp
+      if (input$Country != "All") {
+        mydata1 <- subset( mydata1,Country == input$Country
+        )
+      }
+      
+      p<- ggplot(data=mydata1, aes_string(x=mydata1$Year, y = mydata1$value,color = mydata1$Country)) +
+        geom_line(size = input$size) + xlab("Year") + ylab("Value")+ggtitle(" Life expectancy")
+      if (input$fit) {
+        p <- p + geom_smooth(method = "lm")
+      }
+      p
+      
+    })
+  })
+  output$table <- renderTable({
+    mydata1 <- df_lifeexp
+    data <- spread(mydata1,Country,value)
+    data
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
