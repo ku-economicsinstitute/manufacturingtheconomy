@@ -1,0 +1,289 @@
+---
+title: "Data report_Ch#4- Industrial Indicators"
+author: "University of Cincinnati"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+runtime: shiny
+---
+
+
+## Yearly road Vehicles manufactured country wise
+
+``````{r fig.width=8, fig.height=4, fig.align='center',echo=FALSE,warning=FALSE,fig.cap = "Figure 4.1",message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(reshape)
+library(tidyr)
+library(shiny)
+library(plotly)
+library(shinythemes)
+auto_url<- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTSFkKmvFq80FC71Qgqys1z8WVyxbxjSQsDWObi86bqcSWheyjU53A0qFfJRxG62HCWO0k1Cv55ed87/pub?gid=2062215672&single=true&output=csv"
+auto_csv<- read.csv(url(auto_url))
+df_auto<- melt(auto_csv, id = "Year")
+df_auto$Year <- as.numeric(df_auto$Year)
+colnames(df_auto)[1]<- "Year"
+colnames(df_auto)[2]<- "Country"
+ui <- fluidPage(theme = shinytheme("superhero"),
+                tabsetPanel(
+                  tabPanel( title = "Plot",
+                            # Sidebar layout with a input and output definitions
+                            sidebarLayout(
+                              # Inputs
+                              sidebarPanel(numericInput("size", "Point size", 1, 1),
+                                           checkboxInput("fit", "Add line of best fit", FALSE),
+                                           selectInput("Country", "Country",choices = c("All", levels(df_auto$Country)))
+                              ),
+                              # Outputs
+                              mainPanel(
+                                plotlyOutput(outputId = "scatterplot")
+                              )
+                            )
+                  ),
+                  
+                  tabPanel(title = "Table",tableOutput("table"))
+                )
+)
+
+# Define server function required to create the scatterplot
+server <- function(input, output) {
+  output$scatterplot <- renderPlotly({
+    ggplotly({
+      mydata1 = df_auto
+      if (input$Country != "All") {
+        mydata1 <- subset( mydata1,Country == input$Country
+        )
+      }
+      
+      p<- ggplot(data=mydata1, aes_string(x=mydata1$Year, y = mydata1$value,color = mydata1$Country)) +
+        geom_line(size = input$size) + xlab("Year") + ylab("Value")+ggtitle("Auto production ")
+      if (input$fit) {
+        p <- p + geom_smooth(method = "lm")
+      }
+      p
+      
+    })
+  })
+  output$table <- renderTable({
+    mydata1 <- df_auto
+    data <- spread(mydata1,Country,value)
+    data
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+## Steel Production in Million metric tons
+
+``````{r fig.width=8, fig.height=4, fig.align='center',echo=FALSE,warning=FALSE,fig.cap = "Figure 4.2",message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(reshape)
+library(tidyr)
+library(shiny)
+library(plotly)
+library(shinythemes)
+steel_url<- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTSFkKmvFq80FC71Qgqys1z8WVyxbxjSQsDWObi86bqcSWheyjU53A0qFfJRxG62HCWO0k1Cv55ed87/pub?gid=1173901493&single=true&output=csv"
+steel_csv<- read.csv(url(steel_url))
+df_steel<- melt(steel_csv, id = "Year")
+df_steel$Year <- as.numeric(df_steel$Year)
+colnames(df_steel)[1]<- "Year"
+colnames(df_steel)[2]<- "Country"
+ui <- fluidPage(theme = shinytheme("superhero"),
+                tabsetPanel(
+                  tabPanel( title = "Plot",
+                            # Sidebar layout with a input and output definitions
+                            sidebarLayout(
+                              # Inputs
+                              sidebarPanel(numericInput("size", "Point size", 1, 1),
+                                           checkboxInput("fit", "Add line of best fit", FALSE),
+                                           selectInput("Country", "Country",choices = c("All", levels(df_steel$Country)))
+                              ),
+                              # Outputs
+                              mainPanel(
+                                plotlyOutput(outputId = "scatterplot")
+                              )
+                            )
+                  ),
+                  
+                  tabPanel(title = "Table",tableOutput("table"))
+                )
+)
+
+# Define server function required to create the scatterplot
+server <- function(input, output) {
+  output$scatterplot <- renderPlotly({
+    ggplotly({
+      mydata1 = df_steel
+      if (input$Country != "All") {
+        mydata1 <- subset( mydata1,Country == input$Country
+        )
+      }
+      
+      p<- ggplot(data=mydata1, aes_string(x=mydata1$Year, y = mydata1$value,color = mydata1$Country)) +
+        geom_line(size = input$size) + xlab("Year") + ylab("Million Metric tons")+ggtitle("steel production ")
+      if (input$fit) {
+        p <- p + geom_smooth(method = "lm")
+      }
+      p
+      
+    })
+  })
+  output$table <- renderTable({
+    mydata1 <- df_steel
+    data <- spread(mydata1,Country,value)
+    data
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+## Aluminium Production in Thousand metric tons
+
+``````{r fig.width=8, fig.height=4, fig.align='center',echo=FALSE,warning=FALSE,fig.cap = "Figure 4.2",message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(reshape)
+library(tidyr)
+library(shiny)
+library(plotly)
+library(shinythemes)
+alum_url<- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTSFkKmvFq80FC71Qgqys1z8WVyxbxjSQsDWObi86bqcSWheyjU53A0qFfJRxG62HCWO0k1Cv55ed87/pub?gid=2015095346&single=true&output=csv"
+alum_csv<- read.csv(url(alum_url))
+df_alum<- melt(alum_csv, id = "Year")
+df_alum$Year <- as.numeric(df_alum$Year)
+colnames(df_alum)[1]<- "Year"
+colnames(df_alum)[2]<- "Country"
+ui <- fluidPage(theme = shinytheme("superhero"),
+                tabsetPanel(
+                  tabPanel( title = "Plot",
+                            # Sidebar layout with a input and output definitions
+                            sidebarLayout(
+                              # Inputs
+                              sidebarPanel(numericInput("size", "Point size", 1, 1),
+                                           checkboxInput("fit", "Add line of best fit", FALSE),
+                                           selectInput("Country", "Country",choices = c("All", levels(df_alum$Country)))
+                              ),
+                              # Outputs
+                              mainPanel(
+                                plotlyOutput(outputId = "scatterplot")
+                              )
+                            )
+                  ),
+                  
+                  tabPanel(title = "Table",tableOutput("table"))
+                )
+)
+
+# Define server function required to create the scatterplot
+server <- function(input, output) {
+  output$scatterplot <- renderPlotly({
+    ggplotly({
+      mydata1 = df_alum
+      if (input$Country != "All") {
+        mydata1 <- subset( mydata1,Country == input$Country
+        )
+      }
+      
+      p<- ggplot(data=mydata1, aes_string(x=mydata1$Year, y = mydata1$value,color = mydata1$Country)) +
+        geom_line(size = input$size) + xlab("Year") + ylab("Thousand Metric tons")+ggtitle("Aluminium production ")
+      if (input$fit) {
+        p <- p + geom_smooth(method = "lm")
+      }
+      p
+      
+    })
+  })
+  output$table <- renderTable({
+    mydata1 <- df_alum
+    data <- spread(mydata1,Country,value)
+    data
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+## Paper & Paperboards Production in Thousand metric tons
+
+``````{r fig.width=8, fig.height=4, fig.align='center',echo=FALSE,warning=FALSE,fig.cap = "Figure 4.2",message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(reshape)
+library(tidyr)
+library(shiny)
+library(plotly)
+library(shinythemes)
+paper_url<- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTSFkKmvFq80FC71Qgqys1z8WVyxbxjSQsDWObi86bqcSWheyjU53A0qFfJRxG62HCWO0k1Cv55ed87/pub?gid=154072425&single=true&output=csv"
+paper_csv<- read.csv(url(paper_url))
+df_paper<- melt(paper_csv, id = "Year")
+df_paper$Year <- as.numeric(df_paper$Year)
+colnames(df_paper)[1]<- "Year"
+colnames(df_paper)[2]<- "Country"
+ui <- fluidPage(theme = shinytheme("superhero"),
+                tabsetPanel(
+                  tabPanel( title = "Plot",
+                            # Sidebar layout with a input and output definitions
+                            sidebarLayout(
+                              # Inputs
+                              sidebarPanel(numericInput("size", "Point size", 1, 1),
+                                           checkboxInput("fit", "Add line of best fit", FALSE),
+                                           selectInput("Country", "Country",choices = c("All", levels(df_paper$Country)))
+                              ),
+                              # Outputs
+                              mainPanel(
+                                plotlyOutput(outputId = "scatterplot")
+                              )
+                            )
+                  ),
+                  
+                  tabPanel(title = "Table",tableOutput("table"))
+                )
+)
+
+# Define server function required to create the scatterplot
+server <- function(input, output) {
+  output$scatterplot <- renderPlotly({
+    ggplotly({
+      mydata1 = df_paper
+      if (input$Country != "All") {
+        mydata1 <- subset( mydata1,Country == input$Country
+        )
+      }
+      
+      p<- ggplot(data=mydata1, aes_string(x=mydata1$Year, y = mydata1$value,color = mydata1$Country)) +
+        geom_line(size = input$size) + xlab("Year") + ylab("Thousand Metric tons")+ggtitle("paper production ")
+      if (input$fit) {
+        p <- p + geom_smooth(method = "lm")
+      }
+      p
+      
+    })
+  })
+  output$table <- renderTable({
+    mydata1 <- df_paper
+    data <- spread(mydata1,Country,value)
+    data
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+
+## Job Multipliers : Employment multipliers per $1 million in final demand, by major private-sector industry group
+```{r echo=FALSE,results='asis'}
+library(knitr)
+multiplier_url<- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTSFkKmvFq80FC71Qgqys1z8WVyxbxjSQsDWObi86bqcSWheyjU53A0qFfJRxG62HCWO0k1Cv55ed87/pub?gid=1946805513&single=true&output=csv"
+multiplier_csv<- read.csv(url(multiplier_url))
+kable(multiplier_csv,caption= "Job multipliers by sector")
+```
+
+## To be added: Mfg labor costs (table)
+
+## Manufacturing as a percentage of GDP
+ALREADY uploaded graph in Chapter #1 - as a component of GDPs
